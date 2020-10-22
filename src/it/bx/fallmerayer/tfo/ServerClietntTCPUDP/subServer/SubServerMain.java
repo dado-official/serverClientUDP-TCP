@@ -1,13 +1,13 @@
 package it.bx.fallmerayer.tfo.ServerClietntTCPUDP.subServer;
 
-import it.bx.fallmerayer.tfo.ServerClietntTCPUDP.subServer.Funktions.Funktion;
+import it.bx.fallmerayer.tfo.ServerClietntTCPUDP.subServer.Funktions.DateFunktion;
 import it.bx.fallmerayer.tfo.ServerClietntTCPUDP.subServer.Funktions.FunktionHalloWelt;
+import it.bx.fallmerayer.tfo.ServerClietntTCPUDP.subServer.Funktions.TimeFunktion;
 
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Scanner;
 
 public class SubServerMain {
     private static ArrayList<String> preFunktion;
@@ -36,8 +36,11 @@ public class SubServerMain {
         preFunktion = new ArrayList<>();
         funktion = new ArrayList<>();
         socket = new Socket("localhost", 7777);
-        Funktion halloWelt = new FunktionHalloWelt();
-        conNewFunktion(halloWelt, "halloWelt");
+
+        conNewFunktion(new FunktionHalloWelt(), "halloWelt");
+        conNewFunktion(new DateFunktion(), "date");
+        conNewFunktion(new TimeFunktion(), "time");
+
         System.out.println(preFunktion.toString());
         System.out.println(funktion.toString());
         while(true){

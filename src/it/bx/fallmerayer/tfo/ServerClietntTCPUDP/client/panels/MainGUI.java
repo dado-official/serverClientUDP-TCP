@@ -13,6 +13,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.sql.SQLOutput;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.concurrent.ExecutorService;
@@ -102,7 +104,7 @@ public class MainGUI implements ActionListener {
         System.out.println(str);
         try {
             String[] strings = str.split(",");
-            if(strings[0].equals("funktion")){
+            if(strings[0].equals("funktion")) {
                 System.out.println("FUNKTIONN: " + strings[1]);
                 writeMessageToServer(str);
                 String string = readMessageFromServer();
@@ -115,13 +117,22 @@ public class MainGUI implements ActionListener {
                     String line = scanner.nextLine();
                     System.out.println(line.split(";")[0] +" = " + strings[0]);
                     if(strings[0].equals(line.split(";")[0])){
-                        System.out.println(Integer.parseInt(line.split(";")[1]));
-                        InetAddress ip = InetAddress.getLocalHost();
-                        byte[] buff = null;
-                        buff = str.replace(strings[0] + ",", benutzername + ":").getBytes();
-                        DatagramPacket datagramPacket = new DatagramPacket(buff, buff.length, ip, Integer.parseInt(line.split(";")[1]));
-                        datagramSocket.send(datagramPacket);
-                        su = true;
+                        if(strings[1].startsWith("file:")){
+                            File file = new File(strings[1].split(":")[1]);
+                            Scanner sc = new Scanner(file);
+                            StringBuilder fileContent = new StringBuilder();
+                            while(sc.hasNextLine()){
+                                fileContent.append(sc.nextLine()).append("\n");
+                            }
+                            byte[] buff = null;
+                            buff = (benutzername + ":FILEx0x;" + file.getName() + ";x0headerEnD0x" + fileContent).getBytes();
+                            su = writeUDP(buff, Integer.parseInt(line.split(";")[1]));
+                        } else {
+                            System.out.println(Integer.parseInt(line.split(";")[1]));
+                            byte[] buff = null;
+                            buff = str.replace(strings[0] + ",", benutzername + ":").getBytes();
+                            su = writeUDP(buff, Integer.parseInt(line.split(";")[1]));
+                        }
                     }
                 }
                 if(!su){
@@ -133,6 +144,13 @@ public class MainGUI implements ActionListener {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean writeUDP(byte[] buff, int port) throws IOException {
+        InetAddress ip = InetAddress.getLocalHost();
+        DatagramPacket datagramPacket = new DatagramPacket(buff, buff.length, ip, port);
+        datagramSocket.send(datagramPacket);
+        return true;
     }
 
     private void writeMessageToServer(String nachricht) throws Exception {
@@ -157,6 +175,7 @@ public class MainGUI implements ActionListener {
         switch (actionEvent.getActionCommand()){
             case "senden":
                 writeMessage(inputTextArea.getText());
+                messageTextArea.append(inputTextArea.getText().replace(benutzername, " -->"));
                 inputTextArea.setText("");
                 break;
         }
