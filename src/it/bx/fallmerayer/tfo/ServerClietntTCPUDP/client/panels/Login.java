@@ -73,7 +73,7 @@ public class Login implements ActionListener {
                         System.out.println("login erfolgreich");
                         MainGUI mainGUI = new MainGUI(frame, socket, benutzername.getText());
                     } else {
-                        System.out.println("Fehler bei Login");
+                        System.out.println("Fehler bei Login: ");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();

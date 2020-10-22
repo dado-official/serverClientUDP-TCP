@@ -1,6 +1,6 @@
 package it.bx.fallmerayer.tfo.ServerClietntTCPUDP.mainServer;
 
-import it.bx.fallmerayer.tfo.ServerClietntTCPUDP.client.exception.SocketDisconnected;
+import sun.applet.Main;
 
 import java.io.*;
 import java.net.Socket;
@@ -11,8 +11,8 @@ import java.util.Scanner;
 public class ComToClientMainServer implements Runnable {
     private Socket socket;
 
-    public ComToClientMainServer(Socket socket){
-        this.socket = socket;
+    public ComToClientMainServer(Socket socketClient){
+        this.socket = socketClient;
     }
 
     private void writeMessageToClient(String nachricht) throws Exception {
@@ -33,36 +33,69 @@ public class ComToClientMainServer implements Runnable {
     private void checkMessage(String msg) throws Exception {
         String[] splitMsg = msg.split("x0x");
         File log = new File("src/logUsers.csv");
-        switch (splitMsg[0]){
-            case "R":
-                //client Registrieren
-                if(!log.exists()){
-                    log.createNewFile();
-                }
-                FileWriter fileWriter = new FileWriter(log,true);
-                BufferedWriter bw = new BufferedWriter(fileWriter);
-                bw.write(splitMsg[1] + ";" + splitMsg[2] + "\n");
-                bw.close();
-                writeMessageToClient("1");
+        System.out.println("check Message");
+        if(msg.startsWith("funktion")){
+            System.out.println("is Funktion");
+            writeMessageToSubServer(msg);
+            String string = readMessageFromSubServer();
+            System.out.println(string);
+            writeMessageToClient(string);
+        } else {
+            switch (splitMsg[0]){
+                case "R":
+                    System.out.println("Client Registriert");
+                    //client Registrieren
+                    if(!log.exists()){
+                        log.createNewFile();
+                    }
+                    FileWriter fileWriter = new FileWriter(log,true);
+                    BufferedWriter bw = new BufferedWriter(fileWriter);
+                    bw.write(splitMsg[1] + ";" + splitMsg[2] + "\n");
+                    bw.close();
+                    writeMessageToClient("1");
 
-            case "L":
-                if(!log.exists()){
-                    System.out.println("ERR: file not found");
-                } else {
-                    Scanner scanner = new Scanner(log);
-                    boolean su = false;
-                    while (scanner.hasNextLine()){
-                        String line = scanner.nextLine();
-                        if(line.equals(splitMsg[1] + ";" + splitMsg[2])){
-                            writeMessageToClient("1");
-                            su = true;
+                case "L":
+                    System.out.println("Client login");
+                    if(!log.exists()){
+                        System.out.println("ERR: file not found");
+                    } else {
+                        Scanner scanner = new Scanner(log);
+                        boolean su = false;
+                        while (scanner.hasNextLine()){
+                            String line = scanner.nextLine();
+                            if(line.equals(splitMsg[1] + ";" + splitMsg[2])){
+                                writeMessageToClient("1");
+                                su = true;
+                            }
+                        }
+                        if(!su){
+                            writeMessageToClient("0");
                         }
                     }
-                    if(!su){
-                        writeMessageToClient("0");
-                    }
-                }
+                default:
+                    //System.out.println("Client funktion");
+                    //writeMessageToSubServer(msg);
+                    //writeMessageToClient(readMessageFromSubServer());
+                    break;
+            }
         }
+    }
+
+    private void writeMessageToSubServer(String nachricht) throws Exception {
+        System.out.println("write to subserver");
+        PrintWriter printWriter = new PrintWriter(MainServerMain.subSocket.getOutputStream(), true);
+        printWriter.println(nachricht);
+        System.out.println("Server printer: " +nachricht);
+        printWriter.flush();
+    }
+
+    private String readMessageFromSubServer() throws Exception{
+        String string = null;
+        while (string == null && MainServerMain.subSocket.isConnected()){
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(MainServerMain.subSocket.getInputStream()));
+            string = bufferedReader.readLine();
+        }
+        return string;
     }
 
     @Override

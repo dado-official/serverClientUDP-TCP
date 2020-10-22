@@ -8,10 +8,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -102,31 +99,56 @@ public class MainGUI implements ActionListener {
     }
 
     public void writeMessage(String str){
+        System.out.println(str);
         try {
             String[] strings = str.split(",");
+            if(strings[0].equals("funktion")){
+                System.out.println("FUNKTIONN: " + strings[1]);
+                writeMessageToServer(str);
+                String string = readMessageFromServer();
+                messageTextArea.append(string + "\n");
+            } else {
+                Scanner scanner = new Scanner(new File("src/it/bx/fallmerayer/tfo/ServerClietntTCPUDP/client/dns.csv"));
+                boolean su = false;
 
-            Scanner scanner = new Scanner(new File("src/it/bx/fallmerayer/tfo/ServerClietntTCPUDP/client/dns.csv"));
-            boolean su = false;
-
-            while (scanner.hasNextLine()){
-                String line = scanner.nextLine();
-                System.out.println(line.split(";")[0] +" = " + strings[0]);
-                if(strings[0].equals(line.split(";")[0])){
-                    System.out.println(Integer.parseInt(line.split(";")[1]));
-                    InetAddress ip = InetAddress.getLocalHost();
-                    byte[] buff = null;
-                    buff = str.replace(strings[0] + ",", benutzername + ":").getBytes();
-                    DatagramPacket datagramPacket = new DatagramPacket(buff, buff.length, ip, Integer.parseInt(line.split(";")[1]));
-                    datagramSocket.send(datagramPacket);
-                    su = true;
+                while (scanner.hasNextLine()){
+                    String line = scanner.nextLine();
+                    System.out.println(line.split(";")[0] +" = " + strings[0]);
+                    if(strings[0].equals(line.split(";")[0])){
+                        System.out.println(Integer.parseInt(line.split(";")[1]));
+                        InetAddress ip = InetAddress.getLocalHost();
+                        byte[] buff = null;
+                        buff = str.replace(strings[0] + ",", benutzername + ":").getBytes();
+                        DatagramPacket datagramPacket = new DatagramPacket(buff, buff.length, ip, Integer.parseInt(line.split(";")[1]));
+                        datagramSocket.send(datagramPacket);
+                        su = true;
+                    }
+                }
+                if(!su){
+                    System.out.println("fehler");
                 }
             }
-            if(!su){
-                System.out.println("client nicht gefunden");
-            }
-        } catch (IOException e) {
+
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private void writeMessageToServer(String nachricht) throws Exception {
+        PrintWriter printWriter = new PrintWriter(socket.getOutputStream(), true);
+        System.out.println("printer: " + nachricht);
+        printWriter.println(nachricht);
+        printWriter.flush();
+    }
+
+    private String readMessageFromServer() throws Exception{
+        String string = null;
+        while (string == null && socket.isConnected()){
+            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            string = bufferedReader.readLine();
+        }
+        return string;
     }
 
     @Override
